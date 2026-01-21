@@ -1,0 +1,28 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
+
+// Importaciones de tus pantallas (Carpeta 'screnn')
+import Login from '../screnn/Login';
+import Registro from '../screnn/Registro';
+import JuegoScreen from '../screnn/JuegoScreen';
+import Welcome from '../screnn/Welcome'; // <--- NUEVA PANTALLA IMPORTADA
+
+const Stack = createNativeStackNavigator();
+
+export default function MainNavigator() {
+    return (
+        <NavigationContainer>
+            {/* Cambiamos para que arranque en "Welcome" */}
+            <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+                
+                {/* Agregamos la pantalla de Bienvenida al Stack */}
+                <Stack.Screen name="Welcome" component={Welcome} />
+                
+                <Stack.Screen name="Login" component={Login} />
+                <Stack.Screen name="Registro" component={Registro} />
+                <Stack.Screen name="Juego" component={JuegoScreen} />
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
+}
