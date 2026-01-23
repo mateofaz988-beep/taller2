@@ -10,18 +10,45 @@ export default function Registro({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
+    // --- VALIDACIONES DE SEGURIDAD (Tarea de Adrian) ---
+    
+    // Función Regex para verificar formato de correo auténtico
+    const validarEmail = (email: string) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
+    };
+
+    // Función para validar fortaleza (mínimo 6 caracteres y un número o símbolo)
+    const validarFortalezaClave = (pass: string) => {
+        const tieneEspecial = /[\d!@#$%^&*(),.?":{}|<>]/.test(pass);
+        return pass.length >= 6 && tieneEspecial;
+    };
+
     const registrarUsuario = async () => {
-        if (nick === '' || edad === '' || email === '' || password === '') {
-            Alert.alert("Error", "Debes llenar todos los campos para iniciar tu viaje.");
+        // Mensajes de error por campos vacíos
+        if (!nick || !edad || !email || !password) {
+            Alert.alert("CAMPOS INCOMPLETOS", "Un guerrero no puede luchar sin identidad. Llena todos los campos.");
+            return;
+        }
+
+        // Validación de formato de correo (Adrian)
+        if (!validarEmail(email)) {
+            Alert.alert("CORREO INVÁLIDO", "La dirección de correo no tiene un formato auténtico de Midgard.");
+            return;
+        }
+
+        // Validación de fortaleza de contraseña (Adrian)
+        if (!validarFortalezaClave(password)) {
+            Alert.alert("CONTRASEÑA DÉBIL", "Tu clave debe ser más fuerte: mínimo 6 caracteres y al menos un número o símbolo.");
             return;
         }
 
         try {
-            // 1. Crear usuario en Autenticación
+            // Registro en Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // 2. Guardar datos en Firestore
+            // Guardado en Firestore (Adrian/Andy)
             await setDoc(doc(db, "usuarios", uid), {
                 nick: nick,
                 edad: edad,
@@ -29,11 +56,20 @@ export default function Registro({ navigation }: any) {
                 puntos: 0 
             });
 
-            Alert.alert("¡Alianza Formada!", "Tu registro ha sido completado.");
+            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en los anales del Olimpo.");
             navigation.navigate('Login');
 
         } catch (error: any) {
-            Alert.alert("Error en el registro", error.message);
+            // Mensajes de error específicos según el tipo de fallo de Firebase
+            let mensajeError = "El Olimpo ha rechazado tu petición.";
+            
+            if (error.code === 'auth/email-already-in-use') {
+                mensajeError = "Este correo ya pertenece a otro guerrero.";
+            } else if (error.code === 'auth/invalid-email') {
+                mensajeError = "El correo proporcionado es indigno.";
+            }
+            
+            Alert.alert("ERROR EN EL REGISTRO", mensajeError);
         }
     };
 
@@ -46,9 +82,9 @@ export default function Registro({ navigation }: any) {
                 <View style={styles.separator} />
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>TU APODO DE BATALLA (NICK)</Text>
+                    <Text style={styles.label}>APODO DE BATALLA (NICK)</Text>
                     <TextInput 
-                        placeholder="APODO" 
+                        placeholder="NICK" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         onChangeText={setNick} 
@@ -78,7 +114,7 @@ export default function Registro({ navigation }: any) {
 
                     <Text style={styles.label}>CONTRASEÑA</Text>
                     <TextInput 
-                        placeholder="******" 
+                        placeholder="Mínimo 6 caracteres + número" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         secureTextEntry 
@@ -87,12 +123,11 @@ export default function Registro({ navigation }: any) {
                     />
                 </View>
 
-                {/* Botón Principal */}
+                {/* Botón Estilo God of War (Adrian) */}
                 <TouchableOpacity style={styles.botonPrincipal} onPress={registrarUsuario}>
-                    <Text style={styles.textoBotonPrincipal}>UNIRSE A LA BATALLA</Text>
+                    <Text style={styles.textoBotonPrincipal}>FORJAR CUENTA</Text>
                 </TouchableOpacity>
                 
-                {/* Botón Secundario */}
                 <TouchableOpacity style={styles.botonSecundario} onPress={() => navigation.navigate('Login')}>
                     <Text style={styles.textoBotonSecundario}>VOLVER AL LOGIN</Text>
                 </TouchableOpacity>
@@ -105,7 +140,7 @@ export default function Registro({ navigation }: any) {
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        backgroundColor: '#0f0f13', // Fondo negro/gris oscuro
+        backgroundColor: '#0f0f13', 
         borderWidth: 5,
         borderColor: '#2a2a2a', 
     },
@@ -117,7 +152,7 @@ const styles = StyleSheet.create({
         fontSize: 32, 
         fontWeight: 'bold', 
         textAlign: 'center', 
-        color: '#d4af37', // Dorado
+        color: '#d4af37', 
         letterSpacing: 3, 
         textShadowColor: '#b22222', 
         textShadowOffset: { width: 1, height: 1 },
@@ -128,7 +163,7 @@ const styles = StyleSheet.create({
     separator: {
         width: 150,
         height: 3,
-        backgroundColor: '#8b0000', // Línea roja
+        backgroundColor: '#8b0000', 
         alignSelf: 'center',
         marginBottom: 40,
     },
@@ -154,11 +189,11 @@ const styles = StyleSheet.create({
         borderColor: '#3a3a3a', 
     },
     botonPrincipal: {
-        backgroundColor: '#2e7d32', // Verde oscuro para diferenciar (Acción positiva)
+        backgroundColor: '#8b0000', 
         paddingVertical: 18,
         borderRadius: 2,
         borderWidth: 2,
-        borderColor: '#1b5e20',
+        borderColor: '#d4af37',
         alignItems: 'center',
         marginBottom: 20,
         elevation: 8,
@@ -175,7 +210,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     textoBotonSecundario: {
-        color: '#888', 
+        color: '#d4af37', 
         fontWeight: 'bold',
         fontSize: 14,
         letterSpacing: 1,
