@@ -11,65 +11,67 @@ export default function Registro({ navigation }: any) {
     const [password, setPassword] = useState('');
 
     // --- VALIDACIONES DE SEGURIDAD (Tarea de Adrian) ---
-    
-    // Función Regex para verificar formato de correo auténtico
     const validarEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
 
-    // Función para validar fortaleza (mínimo 6 caracteres y un número o símbolo)
     const validarFortalezaClave = (pass: string) => {
         const tieneEspecial = /[\d!@#$%^&*(),.?":{}|<>]/.test(pass);
         return pass.length >= 6 && tieneEspecial;
     };
 
+    // ANDY contraseña edad nick y email campos validados
     const registrarUsuario = async () => {
-        // Mensajes de error por campos vacíos
         if (!nick || !edad || !email || !password) {
             Alert.alert("CAMPOS INCOMPLETOS", "Un guerrero no puede luchar sin identidad. Llena todos los campos.");
             return;
         }
 
-        // Validación de formato de correo (Adrian)
         if (!validarEmail(email)) {
             Alert.alert("CORREO INVÁLIDO", "La dirección de correo no tiene un formato auténtico de Midgard.");
             return;
         }
 
-        // Validación de fortaleza de contraseña (Adrian)
         if (!validarFortalezaClave(password)) {
             Alert.alert("CONTRASEÑA DÉBIL", "Tu clave debe ser más fuerte: mínimo 6 caracteres y al menos un número o símbolo.");
             return;
         }
 
         try {
-            // Registro en Firebase Authentication
+            
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // Guardado en Firestore (Adrian/Andy)
+           
             await setDoc(doc(db, "usuarios", uid), {
                 nick: nick,
-                edad: edad,
+                edad: parseInt(edad), 
                 email: email,
-                puntos: 0 
+                fotoRef: `avatars/${uid}.png`, 
+                puntos: 0,
+                status: "nuevo guerrero",
+                fechaCreacion: new Date()
             });
 
             Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en los anales del Olimpo.");
             navigation.navigate('Login');
 
         } catch (error: any) {
-            // Mensajes de error específicos según el tipo de fallo de Firebase
+           
+            let tituloError = "ERROR EN EL REGISTRO";
             let mensajeError = "El Olimpo ha rechazado tu petición.";
-            
+
             if (error.code === 'auth/email-already-in-use') {
                 mensajeError = "Este correo ya pertenece a otro guerrero.";
+            } else if (error.code === 'auth/network-request-failed') {
+                tituloError = "SIN CONEXIÓN";
+                mensajeError = "Los servidores de Firebase no responden. Revisa tu conexión a Midgard.";
             } else if (error.code === 'auth/invalid-email') {
                 mensajeError = "El correo proporcionado es indigno.";
             }
             
-            Alert.alert("ERROR EN EL REGISTRO", mensajeError);
+            Alert.alert(tituloError, mensajeError);
         }
     };
 
@@ -123,7 +125,6 @@ export default function Registro({ navigation }: any) {
                     />
                 </View>
 
-                {/* Botón Estilo God of War (Adrian) */}
                 <TouchableOpacity style={styles.botonPrincipal} onPress={registrarUsuario}>
                     <Text style={styles.textoBotonPrincipal}>FORJAR CUENTA</Text>
                 </TouchableOpacity>
@@ -137,33 +138,37 @@ export default function Registro({ navigation }: any) {
     );
 }
 
+
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: '#0f0f13', 
+    container: {
+        flex: 1,
+        backgroundColor: '#0f0f13',
         borderWidth: 5,
-        borderColor: '#2a2a2a', 
+        borderColor: '#2a2a2a',
     },
     scrollContainer: {
         padding: 30,
         justifyContent: 'center',
     },
-    titulo: { 
-        fontSize: 32, 
-        fontWeight: 'bold', 
-        textAlign: 'center', 
-        color: '#d4af37', 
-        letterSpacing: 3, 
-        textShadowColor: '#b22222', 
-        textShadowOffset: { width: 1, height: 1 },
+    titulo: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#d4af37',
+        letterSpacing: 3,
+        textShadowColor: '#b22222',
+        textShadowOffset: { 
+            width: 1, 
+            height: 1 
+        },
         textShadowRadius: 10,
         marginBottom: 10,
-        marginTop: 20
+        marginTop: 20,
     },
     separator: {
         width: 150,
         height: 3,
-        backgroundColor: '#8b0000', 
+        backgroundColor: '#8b0000',
         alignSelf: 'center',
         marginBottom: 40,
     },
@@ -178,18 +183,18 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginLeft: 5,
     },
-    input: { 
-        backgroundColor: '#1c1c1c', 
-        color: '#f0f0f0', 
-        padding: 18, 
-        borderRadius: 2, 
-        marginBottom: 20, 
+    input: {
+        backgroundColor: '#1c1c1c',
+        color: '#f0f0f0',
+        padding: 18,
+        borderRadius: 2,
+        marginBottom: 20,
         fontSize: 16,
         borderWidth: 2,
-        borderColor: '#3a3a3a', 
+        borderColor: '#3a3a3a',
     },
     botonPrincipal: {
-        backgroundColor: '#8b0000', 
+        backgroundColor: '#8b0000',
         paddingVertical: 18,
         borderRadius: 2,
         borderWidth: 2,
@@ -210,10 +215,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     textoBotonSecundario: {
-        color: '#d4af37', 
+        color: '#d4af37',
         fontWeight: 'bold',
         fontSize: 14,
         letterSpacing: 1,
-        textDecorationLine: 'underline'
-    }
+        textDecorationLine: 'underline',
+    },
 });
