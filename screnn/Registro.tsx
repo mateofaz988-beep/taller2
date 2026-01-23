@@ -10,7 +10,7 @@ export default function Registro({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // --- VALIDACIONES DE SEGURIDAD (Tarea de Adrian) ---
+    // --- VALIDACIONES DE SEGURIDAD (Adrian) ---
     const validarEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
@@ -21,8 +21,9 @@ export default function Registro({ navigation }: any) {
         return pass.length >= 6 && tieneEspecial;
     };
 
-    // ANDY contraseña edad nick y email campos validados
+    // --- LÓGICA DE DATOS Y FIREBASE (Andy) ---
     const registrarUsuario = async () => {
+        // 1. Verificación de campos
         if (!nick || !edad || !email || !password) {
             Alert.alert("CAMPOS INCOMPLETOS", "Un guerrero no puede luchar sin identidad. Llena todos los campos.");
             return;
@@ -39,11 +40,11 @@ export default function Registro({ navigation }: any) {
         }
 
         try {
-            
+            // Andy Objetivo: Implementar createUserWithEmailAndPassword
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-           
+            // Andy Objetivo: Registro en Firestore (Nick, Edad, Email y Referencia de Foto)
             await setDoc(doc(db, "usuarios", uid), {
                 nick: nick,
                 edad: parseInt(edad), 
@@ -58,14 +59,14 @@ export default function Registro({ navigation }: any) {
             navigation.navigate('Login');
 
         } catch (error: any) {
-           
+            // Andy: Manejo de Errores (Correo existente y Servidor)
             let tituloError = "ERROR EN EL REGISTRO";
             let mensajeError = "El Olimpo ha rechazado tu petición.";
 
             if (error.code === 'auth/email-already-in-use') {
                 mensajeError = "Este correo ya pertenece a otro guerrero.";
             } else if (error.code === 'auth/network-request-failed') {
-                tituloError = "SIN CONEXIÓN";
+                tituloError = "FALLO DE CONEXIÓN";
                 mensajeError = "Los servidores de Firebase no responden. Revisa tu conexión a Midgard.";
             } else if (error.code === 'auth/invalid-email') {
                 mensajeError = "El correo proporcionado es indigno.";
@@ -157,10 +158,7 @@ const styles = StyleSheet.create({
         color: '#d4af37',
         letterSpacing: 3,
         textShadowColor: '#b22222',
-        textShadowOffset: { 
-            width: 1, 
-            height: 1 
-        },
+        textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 10,
         marginBottom: 10,
         marginTop: 20,
