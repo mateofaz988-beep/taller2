@@ -26,6 +26,8 @@ export default function JuegoScreen({ navigation }: any) {
         }
     }, [tiempo, juegoActivo]);
 
+
+// Andy : obtencion de de datos de los usuarios y puntos
     const obtenerTopJugadores = async () => {
         try {
             const q = query(collection(db, "usuarios"), orderBy("puntos", "desc"), limit(5));
@@ -39,6 +41,8 @@ export default function JuegoScreen({ navigation }: any) {
             console.log("Error trayendo ranking:", error);
         }
     };
+
+//set de puntos al momemto de jugar
 
     function aplastar() {
         if (juegoActivo) {
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
     },
-    // Estilos del Ranking
+   
     rankingContainer: {
         backgroundColor: 'rgba(20, 20, 20, 0.9)',
         width: '90%',
@@ -217,11 +221,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     oro: {
-        color: '#ffd700', // Color dorado brillante para el #1
+        color: '#ffd700', 
         textShadowColor: 'orange',
         textShadowRadius: 5,
     },
-    // Fin estilos Ranking
+ 
     insecto: {
         position: 'absolute',
         padding: 10,
