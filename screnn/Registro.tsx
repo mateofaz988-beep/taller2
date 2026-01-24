@@ -1,16 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, Image } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function Registro({ navigation }: any) {
     const [nick, setNick] = useState('');
     const [edad, setEdad] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [imageUri, setImageUri] = useState<string | null>(null);
 
-    // --- VALIDACIONES DE SEGURIDAD (Adrian) ---
+    const seleccionarAvatar = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (status !== 'granted') {
+            Alert.alert("PERMISO REQUERIDO", "Se necesita acceso a la galería.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.7,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
     const validarEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
@@ -21,58 +42,42 @@ export default function Registro({ navigation }: any) {
         return pass.length >= 6 && tieneEspecial;
     };
 
-    // --- LÓGICA DE DATOS Y FIREBASE (Andy) ---
     const registrarUsuario = async () => {
-        // 1. Verificación de campos
-        if (!nick || !edad || !email || !password) {
-            Alert.alert("CAMPOS INCOMPLETOS", "Un guerrero no puede luchar sin identidad. Llena todos los campos.");
+        if (!nick || !edad || !email || !password || !imageUri) {
+            Alert.alert("CAMPOS INCOMPLETOS", "Llena todos los campos y selecciona un avatar.");
             return;
         }
 
         if (!validarEmail(email)) {
-            Alert.alert("CORREO INVÁLIDO", "La dirección de correo no tiene un formato auténtico de Midgard.");
+            Alert.alert("CORREO INVÁLIDO", "Formato de correo incorrecto.");
             return;
         }
 
         if (!validarFortalezaClave(password)) {
-            Alert.alert("CONTRASEÑA DÉBIL", "Tu clave debe ser más fuerte: mínimo 6 caracteres y al menos un número o símbolo.");
+            Alert.alert("CONTRASEÑA DÉBIL", "Mínimo 6 caracteres y al menos un número o símbolo.");
             return;
         }
 
         try {
-            // Andy Objetivo: Implementar createUserWithEmailAndPassword
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // Andy Objetivo: Registro en Firestore (Nick, Edad, Email y Referencia de Foto)
             await setDoc(doc(db, "usuarios", uid), {
                 nick: nick,
                 edad: parseInt(edad), 
                 email: email,
+                fotoUriLocal: imageUri,
                 fotoRef: `avatars/${uid}.png`, 
                 puntos: 0,
                 status: "nuevo guerrero",
                 fechaCreacion: new Date()
             });
 
-            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en los anales del Olimpo.");
+            Alert.alert("¡ÉXITO!", "Registro completado.");
             navigation.navigate('Login');
 
         } catch (error: any) {
-            // Andy: Manejo de Errores (Correo existente y Servidor)
-            let tituloError = "ERROR EN EL REGISTRO";
-            let mensajeError = "El Olimpo ha rechazado tu petición.";
-
-            if (error.code === 'auth/email-already-in-use') {
-                mensajeError = "Este correo ya pertenece a otro guerrero.";
-            } else if (error.code === 'auth/network-request-failed') {
-                tituloError = "FALLO DE CONEXIÓN";
-                mensajeError = "Los servidores de Firebase no responden. Revisa tu conexión a Midgard.";
-            } else if (error.code === 'auth/invalid-email') {
-                mensajeError = "El correo proporcionado es indigno.";
-            }
-            
-            Alert.alert(tituloError, mensajeError);
+            Alert.alert("ERROR", "No se pudo completar el registro.");
         }
     };
 
@@ -83,6 +88,16 @@ export default function Registro({ navigation }: any) {
                 
                 <Text style={styles.titulo}>NUEVO GUERRERO</Text>
                 <View style={styles.separator} />
+
+                <TouchableOpacity style={styles.avatarWrapper} onPress={seleccionarAvatar}>
+                    {imageUri ? (
+                        <Image source={{ uri: imageUri }} style={styles.avatarImage} />
+                    ) : (
+                        <View style={styles.placeholder}>
+                            <Text style={styles.placeholderText}>ELEGIR AVATAR</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>APODO DE BATALLA (NICK)</Text>
@@ -106,7 +121,7 @@ export default function Registro({ navigation }: any) {
 
                     <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
                     <TextInput 
-                        placeholder="guerrero@midgard.com" 
+                        placeholder="email@dominio.com" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         keyboardType="email-address" 
@@ -117,7 +132,7 @@ export default function Registro({ navigation }: any) {
 
                     <Text style={styles.label}>CONTRASEÑA</Text>
                     <TextInput 
-                        placeholder="Mínimo 6 caracteres + número" 
+                        placeholder="******" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         secureTextEntry 
@@ -139,7 +154,6 @@ export default function Registro({ navigation }: any) {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -157,9 +171,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#d4af37',
         letterSpacing: 3,
-        textShadowColor: '#b22222',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 10,
         marginBottom: 10,
         marginTop: 20,
     },
@@ -170,6 +181,31 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginBottom: 40,
     },
+    avatarWrapper: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#1c1c1c',
+        borderWidth: 2,
+        borderColor: '#d4af37',
+        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 30,
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
+    placeholder: {
+        alignItems: 'center',
+    },
+    placeholderText: {
+        color: '#d4af37',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
     inputContainer: {
         marginBottom: 20,
     },
@@ -177,9 +213,7 @@ const styles = StyleSheet.create({
         color: '#a0a0a0',
         fontSize: 12,
         fontWeight: 'bold',
-        letterSpacing: 1,
         marginBottom: 5,
-        marginLeft: 5,
     },
     input: {
         backgroundColor: '#1c1c1c',
@@ -199,7 +233,6 @@ const styles = StyleSheet.create({
         borderColor: '#d4af37',
         alignItems: 'center',
         marginBottom: 20,
-        elevation: 8,
     },
     textoBotonPrincipal: {
         color: '#fff',
@@ -208,15 +241,11 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
     },
     botonSecundario: {
-        backgroundColor: 'transparent',
-        paddingVertical: 15,
         alignItems: 'center',
     },
     textoBotonSecundario: {
         color: '#d4af37',
         fontWeight: 'bold',
-        fontSize: 14,
-        letterSpacing: 1,
         textDecorationLine: 'underline',
     },
 });
