@@ -1,106 +1,111 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { auth } from '../config/firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function Login({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // --- SEGURIDAD Y VALIDACIÓN (Adrian) ---
     const iniciarSesion = async () => {
-        // Validación de campos vacíos antes de consultar al servidor
         if (!email || !password) {
             Alert.alert("CAMPOS VACÍOS", "Un guerrero debe identificarse para entrar al Valhalla.");
             return;
         }
 
+        setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
             navigation.replace('Juego'); 
         } catch (error: any) {
-            // Adrian: Mensajes de error claros y específicos según el PEA
             let tituloError = "ACCESO DENEGADO";
             let mensajeError = "Tus credenciales son indignas.";
 
-            if (error.code === 'auth/user-not-found') {
-                mensajeError = "Este correo no existe en los anales de Midgard.";
-            } else if (error.code === 'auth/wrong-password') {
-                mensajeError = "La contraseña es incorrecta. ¡Inténtalo de nuevo!";
-            } else if (error.code === 'auth/invalid-email') {
-                mensajeError = "El formato del correo es inválido.";
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                mensajeError = "Este guerrero no existe o la clave es errónea.";
             } else if (error.code === 'auth/network-request-failed') {
                 tituloError = "FALLO DE RED";
-                mensajeError = "No hay conexión con el Olimpo. Revisa tu internet.";
+                mensajeError = "Sin conexión con el Olimpo.";
             }
 
             Alert.alert(tituloError, mensajeError);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            style={styles.container}
+        >
             <StatusBar barStyle="light-content" />
-            
-            {/* Título Estilo Épico */}
-            <View style={styles.headerContainer}>
-                <Text style={styles.titulo}>INICIAR SESIÓN</Text>
-                <View style={styles.separator} />
-            </View>
-            
-            {/* Inputs estilo Piedra Oscura con validación visual sutil */}
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
-                <TextInput 
-                    placeholder="ejemplo@midgard.com" 
-                    placeholderTextColor="#666"
-                    style={[styles.input, !email && email.length === 0 ? null : styles.inputActivo]} 
-                    keyboardType="email-address" 
-                    onChangeText={setEmail} 
-                    value={email} 
-                    autoCapitalize="none" 
-                />
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                
+                <View style={styles.headerContainer}>
+                    <Text style={styles.titulo}>INICIAR SESIÓN</Text>
+                    <View style={styles.separator} />
+                </View>
+                
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
+                    <TextInput 
+                        placeholder="ejemplo@midgard.com" 
+                        placeholderTextColor="#666"
+                        style={[styles.input, email.length > 0 && styles.inputActivo]} 
+                        keyboardType="email-address" 
+                        onChangeText={setEmail} 
+                        value={email} 
+                        autoCapitalize="none" 
+                    />
 
-                <Text style={styles.label}>CONTRASEÑA</Text>
-                <TextInput 
-                    placeholder="******" 
-                    placeholderTextColor="#666"
-                    style={[styles.input, !password && password.length === 0 ? null : styles.inputActivo]} 
-                    secureTextEntry 
-                    onChangeText={setPassword} 
-                    value={password} 
-                />
-            </View>
+                    <Text style={styles.label}>CONTRASEÑA</Text>
+                    <TextInput 
+                        placeholder="******" 
+                        placeholderTextColor="#666"
+                        style={[styles.input, password.length > 0 && styles.inputActivo]} 
+                        secureTextEntry 
+                        onChangeText={setPassword} 
+                        value={password} 
+                    />
+                </View>
 
-            {/* Botón Principal (Rojo Espartano) */}
-            <TouchableOpacity 
-                style={styles.botonPrincipal} 
-                onPress={iniciarSesion}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.textoBotonPrincipal}>ENTRAR AL REINO</Text>
-            </TouchableOpacity>
-            
-            {/* Botón Secundario (Estilo Bronce/Fantasma) */}
-            <TouchableOpacity 
-                style={styles.botonSecundario} 
-                onPress={() => navigation.navigate('Registro')}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.textoBotonSecundario}>FORJAR NUEVA CUENTA</Text>
-            </TouchableOpacity>
-        </View>
+                <TouchableOpacity 
+                    style={[styles.botonPrincipal, loading && { opacity: 0.7 }]} 
+                    onPress={iniciarSesion}
+                    activeOpacity={0.8}
+                    disabled={loading}
+                >
+                    <Text style={styles.textoBotonPrincipal}>
+                        {loading ? "CARGANDO..." : "ENTRAR AL REINO"}
+                    </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                    style={styles.botonSecundario} 
+                    onPress={() => navigation.navigate('Registro')}
+                    activeOpacity={0.7}
+                >
+                    <Text style={styles.textoBotonSecundario}>FORJAR NUEVA CUENTA</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        justifyContent: 'center', 
-        padding: 30, 
         backgroundColor: '#0f0f13',
         borderWidth: 5,
         borderColor: '#2a2a2a', 
+    },
+    scrollContainer: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 30,
     },
     headerContainer: {
         marginBottom: 50,
@@ -144,21 +149,16 @@ const styles = StyleSheet.create({
         borderColor: '#3a3a3a', 
     },
     inputActivo: {
-        borderColor: '#4a4a4a', // Se ilumina levemente al escribir
+        borderColor: '#d4af37', 
     },
     botonPrincipal: {
         backgroundColor: '#8b0000', 
         paddingVertical: 18,
         borderRadius: 2,
         borderWidth: 2,
-        borderColor: '#5a0000',
+        borderColor: '#d4af37',
         alignItems: 'center',
         marginBottom: 20,
-        elevation: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 5,
     },
     textoBotonPrincipal: {
         color: '#fff',

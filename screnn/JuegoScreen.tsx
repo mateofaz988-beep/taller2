@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Image } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, updateDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export default function JuegoScreen({ navigation }: any) {
-    
     const [puntos, setPuntos] = useState(0);
     const [tiempo, setTiempo] = useState(10);
     const [juegoActivo, setJuegoActivo] = useState(true);
-    const [posicion, setPosicion] = useState({ top: 100, left: 100 });
+    const [posicion, setPosicion] = useState({ top: 250, left: 150 });
     const [lideres, setLideres] = useState<any[]>([]);
 
     useEffect(() => {
@@ -26,8 +25,6 @@ export default function JuegoScreen({ navigation }: any) {
         }
     }, [tiempo, juegoActivo]);
 
-
-// Andy : obtencion de de datos de los usuarios y puntos
     const obtenerTopJugadores = async () => {
         try {
             const q = query(collection(db, "usuarios"), orderBy("puntos", "desc"), limit(5));
@@ -38,17 +35,15 @@ export default function JuegoScreen({ navigation }: any) {
             });
             setLideres(lista);
         } catch (error) {
-            console.log("Error trayendo ranking:", error);
+            console.log(error);
         }
     };
-
-//set de puntos al momemto de jugar
 
     function aplastar() {
         if (juegoActivo) {
             setPuntos(puntos + 1);
-            const nuevaTop = Math.floor(Math.random() * 400) + 150; 
-            const nuevaLeft = Math.floor(Math.random() * 300) + 20;
+            const nuevaTop = Math.floor(Math.random() * 350) + 180; 
+            const nuevaLeft = Math.floor(Math.random() * 280) + 20;
             setPosicion({ top: nuevaTop, left: nuevaLeft });
         }
     }
@@ -59,14 +54,12 @@ export default function JuegoScreen({ navigation }: any) {
             const uid = auth.currentUser?.uid;
             if (uid) {
                 const userRef = doc(db, "usuarios", uid);
-                await updateDoc(userRef, {
-                    puntos: puntos
-                });
-                Alert.alert("TIEMPO AGOTADO", `Has recolectado ${puntos} almas.`);
+                await updateDoc(userRef, { puntos: puntos });
+                Alert.alert("BATALLA FINALIZADA", `Has recolectado ${puntos} almas.`);
                 obtenerTopJugadores(); 
             }
         } catch (error) {
-            Alert.alert("ERROR", "No se pudo registrar tu hazaña.");
+            Alert.alert("ERROR", "Hazaña no registrada.");
         }
     };
 
@@ -99,14 +92,21 @@ export default function JuegoScreen({ navigation }: any) {
                     </View>
                 </View>
 
-                {/* TABLA DE LÍDERES (TOP 5) */}
                 <View style={styles.rankingContainer}>
-                    <Text style={styles.rankingTitulo}>🏆 GUERREROS LEGENDARIOS 🏆</Text>
+                    <Text style={styles.rankingTitulo}>🏆 TOP GUERREROS 🏆</Text>
                     {lideres.map((jugador, index) => (
                         <View key={index} style={styles.filaRanking}>
-                            <Text style={[styles.textoRanking, index === 0 && styles.oro]}>
-                                #{index + 1} {jugador.nick}
-                            </Text>
+                            <View style={styles.rankInfo}>
+                                {jugador.fotoUriLocal && (
+                                    <Image 
+                                        source={{ uri: jugador.fotoUriLocal }} 
+                                        style={styles.miniAvatar} 
+                                    />
+                                )}
+                                <Text style={[styles.textoRanking, index === 0 && styles.oro]}>
+                                    #{index + 1} {jugador.nick}
+                                </Text>
+                            </View>
                             <Text style={[styles.textoRanking, index === 0 && styles.oro]}>
                                 {jugador.puntos} ☠️
                             </Text>
@@ -122,7 +122,7 @@ export default function JuegoScreen({ navigation }: any) {
                     style={[styles.insecto, { top: posicion.top, left: posicion.left }]}
                 >
                     <View style={styles.enemigoVisual}>
-                        <Text style={{ fontSize: 40 }}>👺</Text>
+                        <Text style={{ fontSize: 45 }}>👺</Text>
                     </View>
                 </TouchableOpacity>
             ) : (
@@ -145,142 +145,131 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#0f0f13',
-        paddingTop: 30,
+        paddingTop: 40,
         borderWidth: 5,
         borderColor: '#2a2a2a',
     },
     header: {
         alignItems: 'center',
-        marginBottom: 10,
         zIndex: 10, 
     },
     titulo: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#d4af37',
-        letterSpacing: 3,
+        letterSpacing: 2,
         marginBottom: 10,
-        textShadowColor: '#b22222',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 10,
     },
     marcadorContainer: {
         flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20,
+        gap: 15,
         marginBottom: 15,
     },
     marcadorBox: {
         backgroundColor: '#1c1c1c',
-        paddingVertical: 5,
-        paddingHorizontal: 15,
-        borderRadius: 2,
+        padding: 10,
+        borderRadius: 4,
         borderWidth: 1,
         borderColor: '#3a3a3a',
         alignItems: 'center',
-        minWidth: 80,
+        minWidth: 90,
     },
     label: {
         color: '#a0a0a0',
         fontSize: 10,
         fontWeight: 'bold',
-        letterSpacing: 1,
     },
     valor: {
-        color: '#f0f0f0',
-        fontSize: 20,
+        color: '#fff',
+        fontSize: 22,
         fontWeight: 'bold',
     },
-   
     rankingContainer: {
-        backgroundColor: 'rgba(20, 20, 20, 0.9)',
+        backgroundColor: 'rgba(28, 28, 28, 0.95)',
         width: '90%',
-        padding: 10,
-        borderWidth: 1,
+        padding: 12,
+        borderWidth: 2,
         borderColor: '#8b0000',
-        borderRadius: 4,
+        borderRadius: 8,
     },
     rankingTitulo: {
         color: '#d4af37',
         fontSize: 14,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 5,
-        letterSpacing: 1,
+        marginBottom: 8,
     },
     filaRanking: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 2,
-        borderBottomWidth: 0.5,
+        alignItems: 'center',
+        paddingVertical: 4,
+        borderBottomWidth: 1,
         borderBottomColor: '#333',
+    },
+    rankInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    miniAvatar: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: '#d4af37',
     },
     textoRanking: {
         color: '#ccc',
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 'bold',
     },
     oro: {
         color: '#ffd700', 
-        textShadowColor: 'orange',
-        textShadowRadius: 5,
     },
- 
     insecto: {
         position: 'absolute',
-        padding: 10,
         zIndex: 20, 
     },
     enemigoVisual: {
         shadowColor: "#ff0000",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 10,
+        shadowRadius: 15,
+        shadowOpacity: 0.9,
     },
     gameOverContainer: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
+        ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.85)',
+        backgroundColor: 'rgba(0,0,0,0.9)',
         zIndex: 30,
     },
     finTexto: {
-        fontSize: 40,
+        fontSize: 36,
         color: '#8b0000',
         fontWeight: 'bold',
-        letterSpacing: 4,
         marginBottom: 30,
-        textShadowColor: '#fff',
-        textShadowRadius: 2,
     },
     botonReinicio: {
-        backgroundColor: '#2e7d32',
+        backgroundColor: '#8b0000',
         paddingVertical: 15,
-        paddingHorizontal: 40,
+        paddingHorizontal: 30,
+        borderRadius: 4,
         borderWidth: 2,
-        borderColor: '#1b5e20',
-        borderRadius: 2,
+        borderColor: '#d4af37',
     },
     textoBoton: {
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
-        letterSpacing: 2,
     },
     botonSalir: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 30,
         alignSelf: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#8b0000',
-        paddingBottom: 5,
-        zIndex: 40,
     },
     textoBotonSalir: {
-        color: '#8b0000',
+        color: '#d4af37',
         fontWeight: 'bold',
-        fontSize: 14,
-        letterSpacing: 2,
+        textDecorationLine: 'underline',
     }
 });
