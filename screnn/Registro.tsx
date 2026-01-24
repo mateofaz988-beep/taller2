@@ -1,36 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import * as ImagePicker from 'expo-image-picker';
 
 export default function Registro({ navigation }: any) {
     const [nick, setNick] = useState('');
     const [edad, setEdad] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [imageUri, setImageUri] = useState<string | null>(null);
-
-    const seleccionarAvatar = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        
-        if (status !== 'granted') {
-            Alert.alert("PERMISO REQUERIDO", "Se necesita acceso a la galería.");
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.7,
-        });
-
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setImageUri(result.assets[0].uri);
-        }
-    };
 
     const validarEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,8 +21,8 @@ export default function Registro({ navigation }: any) {
     };
 
     const registrarUsuario = async () => {
-        if (!nick || !edad || !email || !password || !imageUri) {
-            Alert.alert("CAMPOS INCOMPLETOS", "Llena todos los campos y selecciona un avatar.");
+        if (!nick || !edad || !email || !password) {
+            Alert.alert("CAMPOS INCOMPLETOS", "Llena todos los campos para continuar.");
             return;
         }
 
@@ -66,14 +44,12 @@ export default function Registro({ navigation }: any) {
                 nick: nick,
                 edad: parseInt(edad), 
                 email: email,
-                fotoUriLocal: imageUri,
-                fotoRef: `avatars/${uid}.png`, 
                 puntos: 0,
                 status: "nuevo guerrero",
                 fechaCreacion: new Date()
             });
 
-            Alert.alert("¡ÉXITO!", "Registro completado.");
+            Alert.alert("¡ÉXITO!", "Tu leyenda ha sido registrada.");
             navigation.navigate('Login');
 
         } catch (error: any) {
@@ -88,16 +64,6 @@ export default function Registro({ navigation }: any) {
                 
                 <Text style={styles.titulo}>NUEVO GUERRERO</Text>
                 <View style={styles.separator} />
-
-                <TouchableOpacity style={styles.avatarWrapper} onPress={seleccionarAvatar}>
-                    {imageUri ? (
-                        <Image source={{ uri: imageUri }} style={styles.avatarImage} />
-                    ) : (
-                        <View style={styles.placeholder}>
-                            <Text style={styles.placeholderText}>ELEGIR AVATAR</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>APODO DE BATALLA (NICK)</Text>
@@ -180,31 +146,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#8b0000',
         alignSelf: 'center',
         marginBottom: 40,
-    },
-    avatarWrapper: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: '#1c1c1c',
-        borderWidth: 2,
-        borderColor: '#d4af37',
-        alignSelf: 'center',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 30,
-        overflow: 'hidden',
-    },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
-    },
-    placeholder: {
-        alignItems: 'center',
-    },
-    placeholderText: {
-        color: '#d4af37',
-        fontSize: 10,
-        fontWeight: 'bold',
     },
     inputContainer: {
         marginBottom: 20,
