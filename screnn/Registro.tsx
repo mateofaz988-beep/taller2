@@ -49,7 +49,10 @@ export default function Registro({ navigation }: any) {
                 fechaCreacion: new Date()
             });
 
-            Alert.alert("¡ÉXITO!", "Tu leyenda ha sido registrada.");
+
+            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en el Olimpo.");
+
+
             navigation.navigate('Login');
 
         } catch (error: any) {

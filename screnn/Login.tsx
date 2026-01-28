@@ -1,12 +1,67 @@
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar } from 'react-native';
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+
 import { auth } from '../config/firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export default function Login({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+
+    // --- BIOMETRÍA: Verificación de Hardware (Andy) ---
+    // Se ejecuta al cargar la pantalla para ver si el celular tiene lector de huella/rostro
+    useEffect(() => {
+        (async () => {
+            const compatible = await LocalAuthentication.hasHardwareAsync();
+            setIsBiometricSupported(compatible);
+        })();
+    }, []);
+
+    //  Andy --- LÓGICA DE AUTENTICACIÓN BIOMÉTRICA ---
+    const iniciarSesionBiometrico = async () => {
+        try {
+            // 1. Verificar si el usuario tiene huellas guardadas en el celular
+            const savedBiometrics = await LocalAuthentication.isEnrolledAsync();
+            if (!savedBiometrics) {
+                return Alert.alert(
+                    "HUELLA NO ENCONTRADA",
+                    "No tienes huellas registradas en este dispositivo. Usa tu contraseña."
+                );
+            }
+
+            // 2. Ejecutar la autenticación (Prompt nativo del sistema)
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'IDENTIFÍCATE, GUERRERO', // Mensaje en el popup
+                fallbackLabel: 'Usar contraseña',
+                disableDeviceFallback: false,
+            });
+
+            // 3. Validación exitosa
+            if (result.success) {
+                Alert.alert("ACCESO CONCEDIDO", "El Valhalla te recibe.");
+                // Aquí redirigimos al juego o inventario
+                navigation.replace('Juego'); // O 'Inventario' según tu flujo
+            } else {
+                Alert.alert("ACCESO DENEGADO", "No se pudo verificar tu identidad.");
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert("ERROR", "El oráculo biométrico falló.");
+        }
+    };
+
+    
+
     const [loading, setLoading] = useState(false);
+
 
     const iniciarSesion = async () => {
         if (!email || !password) {
@@ -22,11 +77,23 @@ export default function Login({ navigation }: any) {
             let tituloError = "ACCESO DENEGADO";
             let mensajeError = "Tus credenciales son indignas.";
 
+
+            if (error.code === 'auth/user-not-found') {
+                mensajeError = "Este correo no existe en los anales de Midgard.";
+            } else if (error.code === 'auth/wrong-password') {
+                mensajeError = "La contraseña es incorrecta.";
+            } else if (error.code === 'auth/invalid-email') {
+                mensajeError = "El formato del correo es inválido.";
+            } else if (error.code === 'auth/network-request-failed') {
+                tituloError = "FALLO DE RED";
+                mensajeError = "No hay conexión con el Olimpo.";
+
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 mensajeError = "Este guerrero no existe o la clave es errónea.";
             } else if (error.code === 'auth/network-request-failed') {
                 tituloError = "FALLO DE RED";
                 mensajeError = "Sin conexión con el Olimpo.";
+
             }
 
             Alert.alert(tituloError, mensajeError);
@@ -41,6 +108,27 @@ export default function Login({ navigation }: any) {
             style={styles.container}
         >
             <StatusBar barStyle="light-content" />
+
+            
+            {/* Título Estilo Épico */}
+            <View style={styles.headerContainer}>
+                <Text style={styles.titulo}>INICIAR SESIÓN</Text>
+                <View style={styles.separator} />
+            </View>
+            
+            {/* Inputs */}
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
+                <TextInput 
+                    placeholder="ejemplo@midgard.com" 
+                    placeholderTextColor="#666"
+                    style={[styles.input, !email && email.length === 0 ? null : styles.inputActivo]} 
+                    keyboardType="email-address" 
+                    onChangeText={setEmail} 
+                    value={email} 
+                    autoCapitalize="none" 
+                />
+
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 
                 <View style={styles.headerContainer}>
@@ -60,6 +148,7 @@ export default function Login({ navigation }: any) {
                         autoCapitalize="none" 
                     />
 
+
                     <Text style={styles.label}>CONTRASEÑA</Text>
                     <TextInput 
                         placeholder="******" 
@@ -70,6 +159,36 @@ export default function Login({ navigation }: any) {
                         value={password} 
                     />
                 </View>
+
+
+            <TouchableOpacity 
+                style={styles.botonPrincipal} 
+                onPress={iniciarSesion}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.textoBotonPrincipal}>ENTRAR AL REINO</Text>
+            </TouchableOpacity>
+
+            {/* ANDY: Botón Biométrico (Solo se muestra si es compatible) */}
+            {isBiometricSupported && (
+                <TouchableOpacity 
+                    style={styles.botonHuella} 
+                    onPress={iniciarSesionBiometrico}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.textoHuella}>🧬 ACCESO BIOMÉTRICO</Text>
+                </TouchableOpacity>
+            )}
+            
+            {/* Botón Registro */}
+            <TouchableOpacity 
+                style={styles.botonSecundario} 
+                onPress={() => navigation.navigate('Registro')}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.textoBotonSecundario}>FORJAR NUEVA CUENTA</Text>
+            </TouchableOpacity>
+        </View>
 
                 <TouchableOpacity 
                     style={[styles.botonPrincipal, loading && { opacity: 0.7 }]} 
@@ -92,6 +211,7 @@ export default function Login({ navigation }: any) {
 
             </ScrollView>
         </KeyboardAvoidingView>
+
     );
 }
 
@@ -149,7 +269,11 @@ const styles = StyleSheet.create({
         borderColor: '#3a3a3a', 
     },
     inputActivo: {
+
+        borderColor: '#4a4a4a', 
+
         borderColor: '#d4af37', 
+
     },
     botonPrincipal: {
         backgroundColor: '#8b0000', 
@@ -158,13 +282,38 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#d4af37',
         alignItems: 'center',
+
+        marginBottom: 15, 
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 5,
+
         marginBottom: 20,
+
     },
     textoBotonPrincipal: {
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 18,
         letterSpacing: 2,
+    },
+    
+    botonHuella: {
+        backgroundColor: '#1c1c1c',
+        paddingVertical: 15,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: '#d4af37',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    textoHuella: {
+        color: '#d4af37',
+        fontWeight: 'bold',
+        fontSize: 14,
+        letterSpacing: 1,
     },
     botonSecundario: {
         backgroundColor: 'transparent',
