@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Image } from 'react-native';
-import { auth, db } from '../config/firebaseConfig';
+import { auth, db } from '../firebase/Config';
 import { doc, updateDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export default function JuegoScreen({ navigation }: any) {

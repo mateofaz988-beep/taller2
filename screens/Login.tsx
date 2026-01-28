@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { auth } from '../config/firebaseConfig';
+import { auth } from '../firebase/Config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function Login({ navigation }: any) {
