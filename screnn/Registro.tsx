@@ -10,7 +10,6 @@ export default function Registro({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // --- VALIDACIONES DE SEGURIDAD (Adrian) ---
     const validarEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
@@ -21,58 +20,43 @@ export default function Registro({ navigation }: any) {
         return pass.length >= 6 && tieneEspecial;
     };
 
-    // --- LÓGICA DE DATOS Y FIREBASE (Andy) ---
     const registrarUsuario = async () => {
-        // 1. Verificación de campos
         if (!nick || !edad || !email || !password) {
-            Alert.alert("CAMPOS INCOMPLETOS", "Un guerrero no puede luchar sin identidad. Llena todos los campos.");
+            Alert.alert("CAMPOS INCOMPLETOS", "Llena todos los campos para continuar.");
             return;
         }
 
         if (!validarEmail(email)) {
-            Alert.alert("CORREO INVÁLIDO", "La dirección de correo no tiene un formato auténtico de Midgard.");
+            Alert.alert("CORREO INVÁLIDO", "Formato de correo incorrecto.");
             return;
         }
 
         if (!validarFortalezaClave(password)) {
-            Alert.alert("CONTRASEÑA DÉBIL", "Tu clave debe ser más fuerte: mínimo 6 caracteres y al menos un número o símbolo.");
+            Alert.alert("CONTRASEÑA DÉBIL", "Mínimo 6 caracteres y al menos un número o símbolo.");
             return;
         }
 
         try {
-            // Andy Objetivo: Implementar createUserWithEmailAndPassword
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // Andy Objetivo: Registro en Firestore (Nick, Edad, Email y Referencia de Foto)
             await setDoc(doc(db, "usuarios", uid), {
                 nick: nick,
                 edad: parseInt(edad), 
                 email: email,
-                fotoRef: `avatars/${uid}.png`, 
                 puntos: 0,
                 status: "nuevo guerrero",
                 fechaCreacion: new Date()
             });
 
+
             Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en el Olimpo.");
+
+
             navigation.navigate('Login');
 
         } catch (error: any) {
-            // Andy: Manejo de Errores (Correo existente y Servidor)
-            let tituloError = "ERROR EN EL REGISTRO";
-            let mensajeError = "El Olimpo ha rechazado tu petición.";
-
-            if (error.code === 'auth/email-already-in-use') {
-                mensajeError = "Este correo ya pertenece a otro guerrero.";
-            } else if (error.code === 'auth/network-request-failed') {
-                tituloError = "FALLO DE CONEXIÓN";
-                mensajeError = "Los servidores de Firebase no responden. Revisa tu conexión a Midgard.";
-            } else if (error.code === 'auth/invalid-email') {
-                mensajeError = "El correo proporcionado es indigno.";
-            }
-            
-            Alert.alert(tituloError, mensajeError);
+            Alert.alert("ERROR", "No se pudo completar el registro.");
         }
     };
 
@@ -106,7 +90,7 @@ export default function Registro({ navigation }: any) {
 
                     <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
                     <TextInput 
-                        placeholder="guerrero@midgard.com" 
+                        placeholder="email@dominio.com" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         keyboardType="email-address" 
@@ -117,7 +101,7 @@ export default function Registro({ navigation }: any) {
 
                     <Text style={styles.label}>CONTRASEÑA</Text>
                     <TextInput 
-                        placeholder="Mínimo 6 caracteres + número" 
+                        placeholder="******" 
                         placeholderTextColor="#666"
                         style={styles.input} 
                         secureTextEntry 
@@ -139,7 +123,6 @@ export default function Registro({ navigation }: any) {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -157,9 +140,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#d4af37',
         letterSpacing: 3,
-        textShadowColor: '#b22222',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 10,
         marginBottom: 10,
         marginTop: 20,
     },
@@ -177,9 +157,7 @@ const styles = StyleSheet.create({
         color: '#a0a0a0',
         fontSize: 12,
         fontWeight: 'bold',
-        letterSpacing: 1,
         marginBottom: 5,
-        marginLeft: 5,
     },
     input: {
         backgroundColor: '#1c1c1c',
@@ -199,7 +177,6 @@ const styles = StyleSheet.create({
         borderColor: '#d4af37',
         alignItems: 'center',
         marginBottom: 20,
-        elevation: 8,
     },
     textoBotonPrincipal: {
         color: '#fff',
@@ -208,15 +185,11 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
     },
     botonSecundario: {
-        backgroundColor: 'transparent',
-        paddingVertical: 15,
         alignItems: 'center',
     },
     textoBotonSecundario: {
         color: '#d4af37',
         fontWeight: 'bold',
-        fontSize: 14,
-        letterSpacing: 1,
         textDecorationLine: 'underline',
     },
 });
