@@ -55,7 +55,7 @@ export default function Registro({ navigation }: any) {
                 fechaCreacion: new Date()
             });
 
-            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en los anales del Olimpo.");
+            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en el Olimpo.");
             navigation.navigate('Login');
 
         } catch (error: any) {
