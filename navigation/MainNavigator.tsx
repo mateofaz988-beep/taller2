@@ -1,30 +1,35 @@
+// App.tsx
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
-
-
-import Login from '../screnn/Login';
-import Registro from '../screnn/Registro';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from '../screnn/Login';
+import RegistroScreen from '../screnn/Registro';
 import JuegoScreen from '../screnn/JuegoScreen';
-import Welcome from '../screnn/Welcome'; 
-import RankingScreen from '../screnn/RakinScreen';
+import InformacionScreen from '../screnn/InformacionScreen';
+import BatallaScreen from '../screnn/BatallaScreen';
+import RankingScreen from '../screnn/RankingScreen';
+import PerfilScreen from '../screnn/PerfilScreen';
+
+// Importa tus pantallas
+
 
 const Stack = createNativeStackNavigator();
 
-export default function MainNavigator() {
-    return (
-        <NavigationContainer>
-
-            <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
-                
- 
-                <Stack.Screen name="Welcome" component={Welcome} />
-                
-                <Stack.Screen name="Login" component={Login} />
-                <Stack.Screen name="Registro" component={Registro} />
-                <Stack.Screen name="Juego" component={JuegoScreen} />
-                <Stack.Screen name="Ranking" component={RankingScreen} />
-            </Stack.Navigator>
-        </NavigationContainer>
-    );
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Registro" component={RegistroScreen} />
+        
+        {/* FLUJO DEL JUEGO */}
+        <Stack.Screen name="Juego" component={JuegoScreen} />
+        <Stack.Screen name="Informacion" component={InformacionScreen} />
+        <Stack.Screen name="Batalla" component={BatallaScreen} />
+        
+        <Stack.Screen name="Ranking" component={RankingScreen} />
+        <Stack.Screen name="Perfil" component={PerfilScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
