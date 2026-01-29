@@ -1,195 +1,86 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, StyleSheet } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { ref, set } from 'firebase/database';
+// Importación de Adrian para la Foto
+import * as ImagePicker from 'expo-image-picker';
 
-export default function Registro({ navigation }: any) {
+export default function RegistroScreen({ navigation }: any) {
     const [nick, setNick] = useState('');
     const [edad, setEdad] = useState('');
+    const [pais, setPais] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [image, setImage] = useState<string | null>(null);
 
-    const validarEmail = (email: string) => {
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return regex.test(email);
+    // --- 1. SELECCIONAR FOTO (Parte de Adrian) ---
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+            base64: true, // Importante para guardar en Firebase
+        });
+        if (!result.canceled && result.assets) {
+            setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+        }
     };
 
-    const validarFortalezaClave = (pass: string) => {
-        const tieneEspecial = /[\d!@#$%^&*(),.?":{}|<>]/.test(pass);
-        return pass.length >= 6 && tieneEspecial;
-    };
-
-    const registrarUsuario = async () => {
-        if (!nick || !edad || !email || !password) {
-            Alert.alert("CAMPOS INCOMPLETOS", "Llena todos los campos para continuar.");
-            return;
+    // --- 2. REGISTRO EN BASE DE DATOS (Fusión Adrian + Andy) ---
+    const registrar = async () => {
+        if (!nick || !email || !password || !image) {
+            return Alert.alert("Error", "Por favor completa los datos y sube una foto.");
         }
-
-        if (!validarEmail(email)) {
-            Alert.alert("CORREO INVÁLIDO", "Formato de correo incorrecto.");
-            return;
-        }
-
-        if (!validarFortalezaClave(password)) {
-            Alert.alert("CONTRASEÑA DÉBIL", "Mínimo 6 caracteres y al menos un número o símbolo.");
-            return;
-        }
-
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const uid = userCredential.user.uid;
-
-            await setDoc(doc(db, "usuarios", uid), {
+            
+            // Guardamos el perfil completo
+            await set(ref(db, `usuarios/${userCredential.user.uid}`), {
                 nick: nick,
-                edad: parseInt(edad), 
+                edad: edad,
+                pais: pais,
                 email: email,
-                puntos: 0,
-                status: "nuevo guerrero",
-                fechaCreacion: new Date()
+                foto: image,
+                puntos: 0 // <--- ESTO ES CRUCIAL PARA EL JUEGO DE ANDY
             });
 
-
-            Alert.alert("¡ALIANZA FORMADA!", "Tu leyenda ha sido registrada en el Olimpo.");
-
-
+            Alert.alert("Éxito", "Cuenta creada. ¡A jugar!");
             navigation.navigate('Login');
-
         } catch (error: any) {
-            Alert.alert("ERROR", "No se pudo completar el registro.");
+            Alert.alert("Error en Registro", error.message);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                
-                <Text style={styles.titulo}>NUEVO GUERRERO</Text>
-                <View style={styles.separator} />
+        <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.titulo}>REGISTRO DE HÉROES</Text>
+            
+            <TouchableOpacity onPress={pickImage} style={styles.avatarBox}>
+                {image ? <Image source={{ uri: image }} style={styles.avatar} /> : <Text style={styles.addPhoto}>+ SUBIR FOTO</Text>}
+            </TouchableOpacity>
+            
+            <TextInput placeholder="Nick de Guerrero" placeholderTextColor="#888" style={styles.input} onChangeText={setNick} />
+            <TextInput placeholder="Edad" placeholderTextColor="#888" style={styles.input} onChangeText={setEdad} keyboardType="numeric"/>
+            <TextInput placeholder="País" placeholderTextColor="#888" style={styles.input} onChangeText={setPais} />
+            <TextInput placeholder="Email" placeholderTextColor="#888" style={styles.input} onChangeText={setEmail} keyboardType="email-address"/>
+            <TextInput placeholder="Contraseña" placeholderTextColor="#888" style={styles.input} onChangeText={setPassword} secureTextEntry/>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>APODO DE BATALLA (NICK)</Text>
-                    <TextInput 
-                        placeholder="NICK" 
-                        placeholderTextColor="#666"
-                        style={styles.input} 
-                        onChangeText={setNick} 
-                        value={nick} 
-                    />
-
-                    <Text style={styles.label}>EDAD</Text>
-                    <TextInput 
-                        placeholder="Años" 
-                        placeholderTextColor="#666"
-                        style={styles.input} 
-                        keyboardType="numeric" 
-                        onChangeText={setEdad} 
-                        value={edad} 
-                    />
-
-                    <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
-                    <TextInput 
-                        placeholder="email@dominio.com" 
-                        placeholderTextColor="#666"
-                        style={styles.input} 
-                        keyboardType="email-address" 
-                        onChangeText={setEmail} 
-                        value={email} 
-                        autoCapitalize="none" 
-                    />
-
-                    <Text style={styles.label}>CONTRASEÑA</Text>
-                    <TextInput 
-                        placeholder="******" 
-                        placeholderTextColor="#666"
-                        style={styles.input} 
-                        secureTextEntry 
-                        onChangeText={setPassword} 
-                        value={password} 
-                    />
-                </View>
-
-                <TouchableOpacity style={styles.botonPrincipal} onPress={registrarUsuario}>
-                    <Text style={styles.textoBotonPrincipal}>FORJAR CUENTA</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.botonSecundario} onPress={() => navigation.navigate('Login')}>
-                    <Text style={styles.textoBotonSecundario}>VOLVER AL LOGIN</Text>
-                </TouchableOpacity>
-
-            </ScrollView>
-        </View>
+            <TouchableOpacity style={styles.boton} onPress={registrar}>
+                <Text style={styles.textoBoton}>CREAR CUENTA</Text>
+            </TouchableOpacity>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0f0f13',
-        borderWidth: 5,
-        borderColor: '#2a2a2a',
-    },
-    scrollContainer: {
-        padding: 30,
-        justifyContent: 'center',
-    },
-    titulo: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: '#d4af37',
-        letterSpacing: 3,
-        marginBottom: 10,
-        marginTop: 20,
-    },
-    separator: {
-        width: 150,
-        height: 3,
-        backgroundColor: '#8b0000',
-        alignSelf: 'center',
-        marginBottom: 40,
-    },
-    inputContainer: {
-        marginBottom: 20,
-    },
-    label: {
-        color: '#a0a0a0',
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    input: {
-        backgroundColor: '#1c1c1c',
-        color: '#f0f0f0',
-        padding: 18,
-        borderRadius: 2,
-        marginBottom: 20,
-        fontSize: 16,
-        borderWidth: 2,
-        borderColor: '#3a3a3a',
-    },
-    botonPrincipal: {
-        backgroundColor: '#8b0000',
-        paddingVertical: 18,
-        borderRadius: 2,
-        borderWidth: 2,
-        borderColor: '#d4af37',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    textoBotonPrincipal: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 18,
-        letterSpacing: 2,
-    },
-    botonSecundario: {
-        alignItems: 'center',
-    },
-    textoBotonSecundario: {
-        color: '#d4af37',
-        fontWeight: 'bold',
-        textDecorationLine: 'underline',
-    },
+    container: { flexGrow: 1, backgroundColor: '#0f0f13', padding: 20, alignItems: 'center' },
+    titulo: { color: '#d4af37', fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+    avatarBox: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#1c1c1c', justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 2, borderColor: '#d4af37' },
+    avatar: { width: 120, height: 120, borderRadius: 60 },
+    addPhoto: { color: '#d4af37', fontWeight: 'bold' },
+    input: { width: '100%', backgroundColor: '#1c1c1c', color: '#fff', padding: 15, borderRadius: 5, marginBottom: 10, borderWidth: 1, borderColor: '#333' },
+    boton: { width: '100%', backgroundColor: '#8b0000', padding: 15, borderRadius: 5, alignItems: 'center', marginTop: 10 },
+    textoBoton: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
 });
