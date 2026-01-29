@@ -1,8 +1,8 @@
-// screens/JuegoScreen.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, StatusBar } from 'react-native';
 
-export default function JuegoScreen({ navigation }: any) {
+export default function LobyScreen({ navigation }: any) {
+    
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -11,8 +11,6 @@ export default function JuegoScreen({ navigation }: any) {
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Misión Disponible</Text>
                 <Text style={styles.cardText}>Los insectos invaden el servidor.</Text>
-                
-                {/* BOTÓN VERDE QUE LLEVA A INFORMACIÓN */}
                 <TouchableOpacity 
                     style={styles.playBtn} 
                     onPress={() => navigation.navigate('Informacion')}
