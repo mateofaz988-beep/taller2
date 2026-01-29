@@ -7,6 +7,7 @@ import Login from '../screnn/Login';
 import Registro from '../screnn/Registro';
 import JuegoScreen from '../screnn/JuegoScreen';
 import Welcome from '../screnn/Welcome'; 
+import RankingScreen from '../screnn/RakinScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function MainNavigator() {
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Registro" component={Registro} />
                 <Stack.Screen name="Juego" component={JuegoScreen} />
+                <Stack.Screen name="Ranking" component={RankingScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
