@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, Styl
 import { auth, db } from '../config/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
-// Importación de Adrian para la Foto
 import * as ImagePicker from 'expo-image-picker';
 
 export default function RegistroScreen({ navigation }: any) {
@@ -14,61 +13,62 @@ export default function RegistroScreen({ navigation }: any) {
     const [password, setPassword] = useState('');
     const [image, setImage] = useState<string | null>(null);
 
-    // --- 1. SELECCIONAR FOTO (Parte de Adrian) ---
+    // --- 1. SELECCIONAR FOTO ---
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
+            // SOLUCIÓN: Usamos "MediaTypeOptions" para que compile sin error rojo.
+            // Ignora la advertencia amarilla por ahora.
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,
-            base64: true, // Importante para guardar en Firebase
+            base64: true, 
         });
+
         if (!result.canceled && result.assets) {
             setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
         }
     };
 
-    // --- 2. REGISTRO EN BASE DE DATOS (Fusión Adrian + Andy) ---
+    // --- 2. REGISTRO EN BASE DE DATOS ---
     const registrar = async () => {
         if (!nick || !email || !password || !image) {
-            return Alert.alert("Error", "Por favor completa los datos y sube una foto.");
+            return Alert.alert("Faltan Datos", "Por favor completa los datos y sube una foto.");
         }
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             
-            // Guardamos el perfil completo
+            // Guardar en Realtime Database
             await set(ref(db, `usuarios/${userCredential.user.uid}`), {
                 nick: nick,
                 edad: edad,
                 pais: pais,
                 email: email,
                 foto: image,
-                puntos: 0 // <--- ESTO ES CRUCIAL PARA EL JUEGO DE ANDY
+                puntos: 0 // Importante para el juego
             });
 
-            Alert.alert("Éxito", "Cuenta creada. ¡A jugar!");
+            Alert.alert("¡Éxito!", "Cuenta creada correctamente.");
             navigation.navigate('Login');
         } catch (error: any) {
-            Alert.alert("Error en Registro", error.message);
+            Alert.alert("Error", error.message);
         }
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.titulo}>REGISTRO DE HÉROES</Text>
-            
             <TouchableOpacity onPress={pickImage} style={styles.avatarBox}>
                 {image ? <Image source={{ uri: image }} style={styles.avatar} /> : <Text style={styles.addPhoto}>+ SUBIR FOTO</Text>}
             </TouchableOpacity>
-            
-            <TextInput placeholder="Nick de Guerrero" placeholderTextColor="#888" style={styles.input} onChangeText={setNick} />
-            <TextInput placeholder="Edad" placeholderTextColor="#888" style={styles.input} onChangeText={setEdad} keyboardType="numeric"/>
-            <TextInput placeholder="País" placeholderTextColor="#888" style={styles.input} onChangeText={setPais} />
-            <TextInput placeholder="Email" placeholderTextColor="#888" style={styles.input} onChangeText={setEmail} keyboardType="email-address"/>
-            <TextInput placeholder="Contraseña" placeholderTextColor="#888" style={styles.input} onChangeText={setPassword} secureTextEntry/>
-
-            <TouchableOpacity style={styles.boton} onPress={registrar}>
-                <Text style={styles.textoBoton}>CREAR CUENTA</Text>
+            <TextInput placeholder="Nick" placeholderTextColor="#888" style={styles.input} onChangeText={setNick} value={nick}/>
+            <TextInput placeholder="Edad" placeholderTextColor="#888" style={styles.input} onChangeText={setEdad} keyboardType="numeric" value={edad}/>
+            <TextInput placeholder="País" placeholderTextColor="#888" style={styles.input} onChangeText={setPais} value={pais}/>
+            <TextInput placeholder="Email" placeholderTextColor="#888" style={styles.input} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" value={email}/>
+            <TextInput placeholder="Contraseña" placeholderTextColor="#888" style={styles.input} onChangeText={setPassword} secureTextEntry value={password}/>
+            <TouchableOpacity style={styles.boton} onPress={registrar}><Text style={styles.textoBoton}>CREAR CUENTA</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')} style={{marginTop: 20}}>
+                <Text style={styles.link}>Volver al Login</Text>
             </TouchableOpacity>
         </ScrollView>
     );
@@ -82,5 +82,6 @@ const styles = StyleSheet.create({
     addPhoto: { color: '#d4af37', fontWeight: 'bold' },
     input: { width: '100%', backgroundColor: '#1c1c1c', color: '#fff', padding: 15, borderRadius: 5, marginBottom: 10, borderWidth: 1, borderColor: '#333' },
     boton: { width: '100%', backgroundColor: '#8b0000', padding: 15, borderRadius: 5, alignItems: 'center', marginTop: 10 },
-    textoBoton: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+    textoBoton: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+    link: { color: '#888', textDecorationLine: 'underline' }
 });
