@@ -1,166 +1,59 @@
+<<<<<<< HEAD:screnn/JuegoScreen.tsx
+// screens/JuegoScreen.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+=======
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Image } from 'react-native';
+import { auth, db } from '../firebase/Config';
+import { doc, updateDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+>>>>>>> 924ad2d9f1eac72091ba92eaf58b54ea95ab103b:screens/JuegoScreen.tsx
 
 export default function JuegoScreen({ navigation }: any) {
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            
-            <View style={styles.header}>
-                <Text style={styles.title}>GUARIDA DEL HÉROE</Text>
-                <View style={styles.underline} />
-            </View>
+            <Text style={styles.title}>GUARIDA DEL HÉROE</Text>
 
-            <View style={styles.mainCard}>
-                <View style={styles.cardInfo}>
-                    <Text style={styles.cardTitle}>MISIÓN ACTIVA</Text>
-                    <Text style={styles.cardText}>Invasión detectada en el sector 7. Los bugs están corrompiendo el sistema.</Text>
-                </View>
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Misión Disponible</Text>
+                <Text style={styles.cardText}>Los insectos invaden el servidor.</Text>
                 
+                {/* BOTÓN VERDE QUE LLEVA A INFORMACIÓN */}
                 <TouchableOpacity 
-                    activeOpacity={0.8}
                     style={styles.playBtn} 
                     onPress={() => navigation.navigate('Informacion')}
                 >
-                    <Text style={styles.playBtnText}>⚔️ IR A LA MISIÓN</Text>
+                    <Text style={styles.btnText}>🦟 IR A LA MISIÓN</Text>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.buttonGrid}>
-                <TouchableOpacity 
-                    activeOpacity={0.7}
-                    style={[styles.smallBtn, { backgroundColor: '#34495e' }]} 
-                    onPress={() => navigation.navigate('Ranking')}
-                >
-                    <Text style={styles.emojiIcon}>🏆</Text>
-                    <Text style={styles.smallBtnText}>RANKING</Text>
+            <View style={styles.row}>
+                <TouchableOpacity style={styles.smallBtn} onPress={() => navigation.navigate('Ranking')}>
+                    <Text style={styles.btnText}>🏆 RANKING</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity 
-                    activeOpacity={0.7}
-                    style={[styles.smallBtn, { backgroundColor: '#34495e' }]} 
-                    onPress={() => navigation.navigate('Perfil')}
-                >
-                    <Text style={styles.emojiIcon}>👤</Text>
-                    <Text style={styles.smallBtnText}>PERFIL</Text>
+                <TouchableOpacity style={styles.smallBtn} onPress={() => navigation.navigate('Perfil')}>
+                    <Text style={styles.btnText}>👤 PERFIL</Text>
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity 
-                style={styles.logoutBtn} 
-                onPress={() => navigation.replace('Login')}
-            >
-                <Text style={styles.logoutText}>DESCONECTAR SISTEMA</Text>
+            <TouchableOpacity style={styles.logoutBtn} onPress={() => navigation.replace('Login')}>
+                <Text style={styles.logoutText}>Cerrar Sesión</Text>
             </TouchableOpacity>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: '#0f141a', 
-        alignItems: 'center', 
-        paddingHorizontal: 25 
-    },
-    header: {
-        marginTop: 50,
-        marginBottom: 40,
-        alignItems: 'center'
-    },
-    title: { 
-        color: '#f1c40f', 
-        fontSize: 30, 
-        fontWeight: '900', 
-        letterSpacing: 2,
-    },
-    underline: {
-        height: 3,
-        width: 80,
-        backgroundColor: '#f1c40f',
-        marginTop: 8,
-        borderRadius: 2
-    },
-    mainCard: { 
-        width: '100%', 
-        backgroundColor: '#1c252e', 
-        padding: 25, 
-        borderRadius: 24, 
-        marginBottom: 20, 
-        borderWidth: 1,
-        borderColor: '#2c3e50',
-        elevation: 15,
-        shadowColor: '#000',
-        shadowOpacity: 0.4,
-        shadowRadius: 10,
-    },
-    cardInfo: {
-        marginBottom: 20
-    },
-    cardTitle: { 
-        color: '#2ecc71', 
-        fontSize: 14, 
-        fontWeight: 'bold', 
-        letterSpacing: 1.5,
-        marginBottom: 8
-    },
-    cardText: { 
-        color: '#ecf0f1', 
-        fontSize: 18, 
-        lineHeight: 24,
-        fontWeight: '500' 
-    },
-    playBtn: { 
-        backgroundColor: '#2ecc71', 
-        paddingVertical: 18, 
-        borderRadius: 16, 
-        alignItems: 'center',
-        shadowColor: '#27ae60',
-        shadowOpacity: 0.5,
-        shadowRadius: 5,
-        elevation: 5
-    },
-    playBtnText: { 
-        color: '#fff', 
-        fontSize: 18, 
-        fontWeight: '900',
-        letterSpacing: 1
-    },
-    buttonGrid: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        width: '100%', 
-        marginBottom: 40 
-    },
-    smallBtn: { 
-        padding: 20, 
-        borderRadius: 20, 
-        width: '47%', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderBottomWidth: 4,
-        borderBottomColor: '#2c3e50'
-    },
-    emojiIcon: {
-        fontSize: 24,
-        marginBottom: 8
-    },
-    smallBtnText: { 
-        color: '#bdc3c7', 
-        fontWeight: 'bold',
-        fontSize: 12,
-        letterSpacing: 1
-    },
-    logoutBtn: { 
-        padding: 15,
-        marginTop: 'auto',
-        marginBottom: 30
-    },
-    logoutText: { 
-        color: '#e74c3c', 
-        fontWeight: 'bold',
-        fontSize: 14,
-        letterSpacing: 2,
-        textDecorationLine: 'underline' 
-    }
+    container: { flex: 1, backgroundColor: '#121212', alignItems: 'center', padding: 20, paddingTop: 60 },
+    title: { color: '#d4af37', fontSize: 28, fontWeight: 'bold', marginBottom: 40 },
+    card: { width: '100%', backgroundColor: '#1e1e1e', padding: 20, borderRadius: 15, marginBottom: 20, borderLeftWidth: 5, borderLeftColor: '#d4af37' },
+    cardTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 5 },
+    cardText: { color: '#aaa', marginBottom: 15 },
+    playBtn: { backgroundColor: '#27ae60', padding: 15, borderRadius: 8, alignItems: 'center' },
+    row: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 30 },
+    smallBtn: { backgroundColor: '#2980b9', padding: 15, borderRadius: 8, width: '48%', alignItems: 'center' },
+    btnText: { color: '#fff', fontWeight: 'bold' },
+    logoutBtn: { padding: 10 },
+    logoutText: { color: '#c0392b', textDecorationLine: 'underline' }
 });
