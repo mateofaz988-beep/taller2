@@ -1,6 +1,12 @@
+<<<<<<< HEAD:screnn/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar } from 'react-native';
 import { auth } from '../config/firebaseConfig';
+=======
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { auth } from '../firebase/Config';
+>>>>>>> 924ad2d9f1eac72091ba92eaf58b54ea95ab103b:screens/Login.tsx
 import { signInWithEmailAndPassword } from 'firebase/auth';
 // Importación de Andy para la Huella
 import * as LocalAuthentication from 'expo-local-authentication';

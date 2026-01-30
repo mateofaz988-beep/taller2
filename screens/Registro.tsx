@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
+<<<<<<< HEAD:screnn/Registro.tsx
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, Alert, StyleSheet } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
+=======
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import { auth, db } from '../firebase/Config';
+>>>>>>> 924ad2d9f1eac72091ba92eaf58b54ea95ab103b:screens/Registro.tsx
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
 import * as ImagePicker from 'expo-image-picker';

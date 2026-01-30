@@ -1,6 +1,13 @@
+<<<<<<< HEAD:screnn/JuegoScreen.tsx
 // screens/JuegoScreen.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+=======
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar, Image } from 'react-native';
+import { auth, db } from '../firebase/Config';
+import { doc, updateDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+>>>>>>> 924ad2d9f1eac72091ba92eaf58b54ea95ab103b:screens/JuegoScreen.tsx
 
 export default function JuegoScreen({ navigation }: any) {
     return (
