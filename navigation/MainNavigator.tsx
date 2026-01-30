@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import LoginScreen from '../screens/Login';
 import RegistroScreen from '../screens/Registro';
-import JuegoScreen from '../screens/JuegoScreen';
+import JuegoScreen from '../screens/LobbyScreen';
 import InformacionScreen from '../screens/InformacionScreen';
 import BatallaScreen from '../screens/BatallaScreen';
 import RankingScreen from '../screens/RankingScreen';
