@@ -17,7 +17,7 @@ export default function Welcome({ navigation }: any) {
                     {/* Adrian: Detalle visual rústico */}
                     <View style={styles.divider} />
                     
-                    <Text style={styles.tallerText}>TALLER 1</Text>
+                    <Text style={styles.tallerText}>OLYMPUS ARENA</Text>
                     
                     <View style={styles.teamContainer}>
                         <Text style={styles.integrante}>ADRIAN FAZ</Text>

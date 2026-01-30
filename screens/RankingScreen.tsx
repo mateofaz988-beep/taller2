@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet } from 'react-native';
-import { db } from '../config/firebaseConfig';
+import { auth, db } from '../firebase/Config'; 
 import { ref, onValue } from 'firebase/database';
  
 export default function RankingScreen() {
