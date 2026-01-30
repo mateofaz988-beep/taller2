@@ -1,44 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert, Animated, SafeAreaView } from 'react-native';
-import { auth, db } from '../config/firebaseConfig';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert, Animated, ImageBackground, StatusBar, Vibration } from 'react-native';
+import { auth, db } from '../firebase/Config';
 import { ref, update, get } from 'firebase/database';
 
 const { width, height } = Dimensions.get('window');
 
-export default function BatallaScreen({ navigation }: any) {
-    const [puntos, setPuntos] = useState(0);
-    const [tiempo, setTiempo] = useState(30);
-    const [jugando, setJugando] = useState(true);
-    const [congelado, setCongelado] = useState(false);
+// IMPORTANTE: Asegúrate de tener la imagen en la carpeta assets
+const IMAGEN_FONDO = require('../assets/kratos.jpeg'); 
 
+export default function BatallaScreen({ navigation }: any) {
+    // --- ESTADOS ---
+    const [puntos, setPuntos] = useState(0);
+    const [tiempo, setTiempo] = useState(20);
+    const [nivel, setNivel] = useState(1);
+    const [jugando, setJugando] = useState(true);
+    const [petrificado, setPetrificado] = useState(false);
+
+    // Referencias para lógica interna
     const puntosRef = useRef(0);
     useEffect(() => { puntosRef.current = puntos; }, [puntos]);
 
-    const posInsecto = useRef(new Animated.ValueXY({ x: 50, y: 100 })).current;
-    const posBomba   = useRef(new Animated.ValueXY({ x: 200, y: 200 })).current;
-    const posHielo   = useRef(new Animated.ValueXY({ x: 100, y: 300 })).current;
-    const posCalavera= useRef(new Animated.ValueXY({ x: 300, y: 100 })).current;
-    const posFantasma= useRef(new Animated.ValueXY({ x: 150, y: 150 })).current;
-    const opacidadFantasma = useRef(new Animated.Value(1)).current;
+    // --- ANIMACIONES (Posiciones X, Y) ---
+    // Usamos ValueXY para poder "teletransportarlos" con setValue
+    const posOrbe = useRef(new Animated.ValueXY({ x: 100, y: 100 })).current;
+    const posFuego = useRef(new Animated.ValueXY({ x: -200, y: -200 })).current;
+    const posMedusa = useRef(new Animated.ValueXY({ x: -200, y: -200 })).current;
+    const posZeus = useRef(new Animated.ValueXY({ x: -200, y: -200 })).current;
 
-    useEffect(() => {
-        if (jugando) {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(opacidadFantasma, { toValue: 0.2, duration: 800, useNativeDriver: false }),
-                    Animated.timing(opacidadFantasma, { toValue: 1, duration: 800, useNativeDriver: false })
-                ])
-            ).start();
-        }
-    }, [jugando]);
-
+    // --- 1. TEMPORIZADOR ---
     useEffect(() => {
         if (!jugando) return;
         const reloj = setInterval(() => {
             setTiempo((prev) => {
                 if (prev <= 1) {
                     clearInterval(reloj);
-                    terminarJuego("¡Se acabó el tiempo!");
+                    finDelJuego("EL TIEMPO SE AGOTÓ");
                     return 0;
                 }
                 return prev - 1;
@@ -47,102 +43,221 @@ export default function BatallaScreen({ navigation }: any) {
         return () => clearInterval(reloj);
     }, [jugando]);
 
+    // --- 2. MOTOR DE MOVIMIENTO (IA ENEMIGA) ---
+    // Este efecto se ejecuta cada vez que cambia el nivel o el estado de juego
     useEffect(() => {
-        if (jugando && !congelado) moverTodosLosObjetos();
-    }, [jugando, congelado]);
+        if (jugando && !petrificado) {
+            moverEnemigos();
+        }
+    }, [jugando, petrificado, nivel]);
 
-    const moverTodosLosObjetos = () => {
-        const randomX = () => Math.floor(Math.random() * (width - 80));
-        const randomY = () => Math.floor(Math.random() * (height - 200)) + 100;
+    const obtenerPosicionRandom = () => {
+        return {
+            x: Math.floor(Math.random() * (width - 90)),
+            y: Math.floor(Math.random() * (height - 200)) + 80
+        };
+    };
+
+    const moverEnemigos = () => {
+        // CÁLCULO DE DIFICULTAD:
+        // Nivel 1: 1200ms (Lento)
+        // Nivel 5: 700ms (Rápido)
+        // Nivel 10: 200ms (Imposible)
+        const velocidadBase = Math.max(200, 1300 - (nivel * 110));
+
         Animated.parallel([
-            Animated.timing(posInsecto, { toValue: { x: randomX(), y: randomY() }, duration: 1000, useNativeDriver: false }),
-            Animated.timing(posBomba,   { toValue: { x: randomX(), y: randomY() }, duration: 1200, useNativeDriver: false }),
-            Animated.timing(posHielo,   { toValue: { x: randomX(), y: randomY() }, duration: 1500, useNativeDriver: false }),
-            Animated.timing(posCalavera,{ toValue: { x: randomX(), y: randomY() }, duration: 1800, useNativeDriver: false }),
-            Animated.timing(posFantasma,{ toValue: { x: randomX(), y: randomY() }, duration: 2000, useNativeDriver: false }),
+            // El Orbe (Objetivo) se mueve erráticamente
+            Animated.timing(posOrbe, { 
+                toValue: obtenerPosicionRandom(), 
+                duration: velocidadBase, 
+                useNativeDriver: false 
+            }),
+            // Las trampas se mueven a diferentes ritmos para desorientar
+            Animated.timing(posFuego, { toValue: obtenerPosicionRandom(), duration: velocidadBase * 1.2, useNativeDriver: false }),
+            Animated.timing(posMedusa, { toValue: obtenerPosicionRandom(), duration: velocidadBase * 1.5, useNativeDriver: false }),
+            Animated.timing(posZeus, { toValue: obtenerPosicionRandom(), duration: velocidadBase * 0.8, useNativeDriver: false }), // Zeus es muy rápido
         ]).start(({ finished }) => {
-            if (finished && jugando && !congelado) moverTodosLosObjetos();
+            // Si la animación terminó naturalmente (no fue interrumpida por un click), sigue moviéndose
+            if (finished && jugando && !petrificado) {
+                moverEnemigos();
+            }
         });
     };
 
+    // --- 3. AL TOCAR (Lógica de Teletransporte) ---
     const tocarObjeto = (tipo: string) => {
-        if (!jugando || congelado) return;
-        if (tipo === 'insecto') { setPuntos(puntos + 10); moverTodosLosObjetos(); } 
-        else if (tipo === 'fantasma') { setPuntos(puntos + 25); moverTodosLosObjetos(); }
-        else if (tipo === 'bomba') { setTiempo(t => (t > 5 ? t - 5 : 0)); moverTodosLosObjetos(); }
-        else if (tipo === 'hielo') { setCongelado(true); setTimeout(() => { setCongelado(false); }, 3000); }
-        else if (tipo === 'calavera') { terminarJuego("💀 Game Over"); }
+        if (!jugando || petrificado) return;
+
+        if (tipo === 'orbe') {
+            // 1. Detener animación actual INSTANTÁNEAMENTE
+            posOrbe.stopAnimation();
+
+            // 2. TELETRANSPORTE: Forzamos la posición a otro lado sin animación
+            // Esto evita que se quede quieto si haces muchos clicks
+            posOrbe.setValue(obtenerPosicionRandom());
+
+            // 3. Lógica de Puntos
+            const nuevosPuntos = puntos + 10;
+            setPuntos(nuevosPuntos);
+            
+            // Subir nivel cada 30 puntos (Más rápido)
+            if (nuevosPuntos % 30 === 0) {
+                setNivel(n => n + 1);
+                // Damos un poco de tiempo extra al subir de nivel
+                setTiempo(t => t + 3);
+            } else {
+                setTiempo(t => t + 1); // +1 segundo por acierto normal
+            }
+
+            // 4. Reiniciar movimiento inmediatamente hacia un NUEVO punto
+            moverEnemigos();
+        } 
+        else if (tipo === 'fuego') {
+            Vibration.vibrate(100);
+            setTiempo(t => (t > 5 ? t - 5 : 0));
+            // Mover trampas para que no te vuelvan a pegar
+            posFuego.setValue(obtenerPosicionRandom());
+            moverEnemigos();
+        }
+        else if (tipo === 'medusa') {
+            Vibration.vibrate(200);
+            setPetrificado(true);
+            // Congelamos todo 3 segundos
+            setTimeout(() => {
+                if(jugando) setPetrificado(false);
+            }, 3000);
+        }
+        else if (tipo === 'zeus') {
+            Vibration.vibrate(500);
+            finDelJuego("TE ALCANZÓ EL RAYO ⚡");
+        }
     };
 
-    const terminarJuego = async (mensaje: string) => {
+    // --- 4. GAME OVER ---
+    const finDelJuego = async (razon: string) => {
         setJugando(false);
-        const puntajeFinal = puntosRef.current;
+        const scoreFinal = puntosRef.current;
         const uid = auth.currentUser?.uid;
+
         if (uid) {
             try {
-                const refPuntos = ref(db, `usuarios/${uid}/puntos`);
-                const snapshot = await get(refPuntos);
+                const refDb = ref(db, `usuarios/${uid}/puntos`);
+                const snapshot = await get(refDb);
                 const recordActual = snapshot.exists() ? snapshot.val() : 0;
-                if (puntajeFinal > recordActual) {
-                    await update(ref(db, `usuarios/${uid}`), { puntos: puntajeFinal });
-                    Alert.alert("🏆 NUEVO RÉCORD", `Puntos: ${puntajeFinal}`, [{ text: "Ok", onPress: () => navigation.replace('Juego') }]);
+
+                if (scoreFinal > recordActual) {
+                    await update(ref(db, `usuarios/${uid}`), { puntos: scoreFinal });
+                    Alert.alert("¡DIOS DE LA GUERRA!", `NUEVO RÉCORD: ${scoreFinal}\nNivel: ${nivel}`, [
+                        { text: "Salir", onPress: () => navigation.replace('Juego') }
+                    ]);
                 } else {
-                    Alert.alert("FIN", `${mensaje}\nPuntos: ${puntajeFinal}`, [{ text: "Reintentar", onPress: () => navigation.replace('Juego') }]);
+                    Alert.alert("DERROTADO", `${razon}\nPuntos: ${scoreFinal}`, [
+                        { text: "Reintentar", onPress: () => navigation.replace('Juego') }
+                    ]);
                 }
             } catch (error) { console.log(error); }
         }
     };
 
+    // Tamaño dinámico: Se hacen más pequeños con el nivel
+    const size = Math.max(50, 100 - (nivel * 6));
+
     return (
-        <View style={[styles.contenedor, { backgroundColor: congelado ? '#4facfe' : '#1e272e' }]}>
-            <SafeAreaView style={styles.header}>
-                <View style={styles.marcador}>
-                    <Text style={styles.texto}>⏳ {tiempo}s</Text>
-                    <Text style={styles.separador}>|</Text>
-                    <Text style={[styles.texto, {color: '#feca57'}]}>🏆 {puntos}</Text>
+        <ImageBackground source={IMAGEN_FONDO} style={styles.fondo} resizeMode="cover">
+            {/* Capa oscura si estás petrificado */}
+            <View style={[styles.overlay, { backgroundColor: petrificado ? 'rgba(128,128,128,0.8)' : 'rgba(0,0,0,0.4)' }]}>
+                <StatusBar hidden />
+
+                {/* HUD */}
+                <View style={[styles.hud, { borderColor: tiempo < 5 ? 'red' : '#d4af37' }]}>
+                    <Text style={[styles.hudText, {color: tiempo < 5 ? 'red' : '#fff'}]}>⏳ {tiempo}</Text>
+                    <View style={{alignItems:'center'}}>
+                        <Text style={styles.label}>NIVEL</Text>
+                        <Text style={[styles.hudText, {color:'#f1c40f'}]}>{nivel}</Text>
+                    </View>
+                    <Text style={styles.hudText}>Pts: {puntos}</Text>
                 </View>
-            </SafeAreaView>
-            {jugando && (
-                <>
-                    <Animated.View style={[posInsecto.getLayout(), styles.absoluto]}>
-                        <TouchableOpacity onPress={() => tocarObjeto('insecto')} style={[styles.bola, styles.shadow, {backgroundColor:'#1dd1a1'}]}>
-                            <Text style={styles.emoji}>🦟</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                    <Animated.View style={[posFantasma.getLayout(), styles.absoluto, { opacity: opacidadFantasma }]}>
-                        <TouchableOpacity onPress={() => tocarObjeto('fantasma')} style={[styles.bola, styles.shadow, {backgroundColor:'#c8d6e5'}]}>
-                            <Text style={styles.emoji}>👻</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                    <Animated.View style={[posBomba.getLayout(), styles.absoluto]}>
-                        <TouchableOpacity onPress={() => tocarObjeto('bomba')} style={[styles.bola, styles.shadow, {backgroundColor:'#ff6b6b'}]}>
-                            <Text style={styles.emoji}>💣</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                    <Animated.View style={[posHielo.getLayout(), styles.absoluto]}>
-                        <TouchableOpacity onPress={() => tocarObjeto('hielo')} style={[styles.bola, styles.shadow, {backgroundColor:'#48dbfb'}]}>
-                            <Text style={styles.emoji}>🧊</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                    <Animated.View style={[posCalavera.getLayout(), styles.absoluto]}>
-                        <TouchableOpacity onPress={() => tocarObjeto('calavera')} style={[styles.bola, styles.shadow, {backgroundColor:'#2f3542', borderColor: '#ff4757', borderWidth: 3}]}>
-                            <Text style={styles.emoji}>☠️</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                </>
-            )}
-        </View>
+
+                {petrificado && <Text style={styles.avisoPetrificado}>¡PETRIFICADO!</Text>}
+
+                {jugando && (
+                    <>
+                        {/* OBJETIVO (ORBE ROJO) - Siempre visible */}
+                        <Animated.View style={[posOrbe.getLayout(), styles.absoluto]}>
+                            <TouchableOpacity onPress={() => tocarObjeto('orbe')} style={[styles.enemigo, {width: size, height: size, borderColor:'#fff', backgroundColor:'#c0392b'}]}>
+                                <Text style={{fontSize: size*0.5}}>🔴</Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+
+                        {/* TRAMPA 1: FUEGO (Nvl 2+) */}
+                        {nivel >= 2 && (
+                            <Animated.View style={[posFuego.getLayout(), styles.absoluto]}>
+                                <TouchableOpacity onPress={() => tocarObjeto('fuego')} style={[styles.enemigo, {width: size, height: size, borderColor:'#e67e22', backgroundColor:'rgba(255,100,0,0.6)'}]}>
+                                    <Text style={{fontSize: size*0.5}}>🔥</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        )}
+
+                        {/* TRAMPA 2: MEDUSA (Nvl 4+) */}
+                        {nivel >= 4 && (
+                            <Animated.View style={[posMedusa.getLayout(), styles.absoluto]}>
+                                <TouchableOpacity onPress={() => tocarObjeto('medusa')} style={[styles.enemigo, {width: size, height: size, borderColor:'#2ecc71', backgroundColor:'rgba(0,200,0,0.6)'}]}>
+                                    <Text style={{fontSize: size*0.5}}>🐍</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        )}
+
+                        {/* TRAMPA 3: ZEUS (Nvl 7+) */}
+                        {nivel >= 7 && (
+                            <Animated.View style={[posZeus.getLayout(), styles.absoluto]}>
+                                <TouchableOpacity onPress={() => tocarObjeto('zeus')} style={[styles.enemigo, {width: size, height: size, borderColor:'#f1c40f', backgroundColor:'rgba(255,215,0,0.6)'}]}>
+                                    <Text style={{fontSize: size*0.5}}>⚡</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        )}
+                    </>
+                )}
+            </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    contenedor: { flex: 1 },
-    header: { width: '100%', alignItems: 'center', marginTop: 20 },
-    marcador: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center' },
-    texto: { color: 'white', fontSize: 22, fontWeight: '900' },
-    separador: { color: 'rgba(255,255,255,0.3)', marginHorizontal: 15, fontSize: 22 },
+    fondo: { flex: 1 },
+    overlay: { flex: 1 },
+    hud: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        padding: 20, 
+        paddingTop: 40, 
+        backgroundColor: 'rgba(0,0,0,0.6)', 
+        borderBottomWidth: 3, 
+        margin: 10,
+        borderRadius: 10
+    },
+    hudText: { color: '#fff', fontSize: 24, fontWeight: 'bold', fontFamily: 'monospace' },
+    label: { color: '#aaa', fontSize: 10, fontWeight: 'bold' },
     absoluto: { position: 'absolute' },
-    bola: { width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center' },
-    shadow: { elevation: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 6 },
-    emoji: { fontSize: 35 }
+    enemigo: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderRadius: 100,
+        shadowColor: "#fff",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 10,
+        elevation: 10
+    },
+    avisoPetrificado: {
+        position: 'absolute',
+        top: '50%',
+        alignSelf: 'center',
+        color: '#ccc',
+        fontSize: 40,
+        fontWeight: 'bold',
+        textShadowColor: '#000',
+        textShadowRadius: 10,
+        zIndex: 100
+    }
 });

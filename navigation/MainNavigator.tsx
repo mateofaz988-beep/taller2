@@ -2,23 +2,30 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from '../screnn/Login';
-import RegistroScreen from '../screnn/Registro';
-import JuegoScreen from '../screnn/JuegoScreen';
-import InformacionScreen from '../screnn/InformacionScreen';
-import BatallaScreen from '../screnn/BatallaScreen';
-import RankingScreen from '../screnn/RankingScreen';
-import PerfilScreen from '../screnn/PerfilScreen';
 
 // Importa tus pantallas
 
+import LoginScreen from '../screens/Login';
+import RegistroScreen from '../screens/Registro';
+import JuegoScreen from '../screens/JuegoScreen';
+import InformacionScreen from '../screens/InformacionScreen';
+import BatallaScreen from '../screens/BatallaScreen';
+import RankingScreen from '../screens/RankingScreen';
+import PerfilScreen from '../screens/PerfilScreen';
+import Welcome from '../screens/Welcome';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      {/* CAMBIO AQUÍ: initialRouteName="Welcome" */}
+      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+        
+        {/* PANTALLA DE INICIO */}
+        <Stack.Screen name="Welcome" component={Welcome} />
+
+        {/* AUTENTICACIÓN */}
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Registro" component={RegistroScreen} />
         
@@ -29,6 +36,7 @@ export default function App() {
         
         <Stack.Screen name="Ranking" component={RankingScreen} />
         <Stack.Screen name="Perfil" component={PerfilScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
