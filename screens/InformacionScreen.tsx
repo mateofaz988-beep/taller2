@@ -5,51 +5,142 @@ export default function InformacionScreen({ navigation }: any) {
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <View style={styles.headerContainer}>
+            
+            <View style={styles.content}>
                 <Text style={styles.header}>CONFIDENCIAL</Text>
-                <View style={styles.lineaRoja} />
+                
+                <View style={styles.infoBox}>
+                    <Text style={styles.missionTitle}>OBJETIVO: CAZA INSECTOS</Text>
+                    
+                    <View style={styles.section}>
+                        <Text style={styles.label}>MISIÓN:</Text>
+                        <Text style={styles.text}>
+                            Una plaga de "Bugs" está destruyendo el código. Tu misión es eliminarlos antes de que se agote el tiempo.
+                        </Text>
+                    </View>
+                    
+                    <View style={styles.section}>
+                        <Text style={styles.label}>DIFICULTAD ADAPTATIVA:</Text>
+                        <Text style={styles.text}>
+                            Los insectos se moverán más rápido y se harán más pequeños conforme aumente tu puntaje.
+                        </Text>
+                    </View>
+
+                    <View style={styles.divider} />
+                    <Text style={styles.warning}>⚠️ TIENES 20 SEGUNDOS ⚠️</Text>
+                </View>
+
+                <TouchableOpacity 
+                    activeOpacity={0.7}
+                    style={styles.fightBtn} 
+                    onPress={() => navigation.replace('Batalla')}
+                >
+                    <Text style={styles.btnText}>⚔️ INICIAR BATALLA ⚔️</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.cancelBtn}
+                >
+                    <Text style={styles.cancelText}>Cancelar Misión</Text>
+                </TouchableOpacity>
             </View>
-            <View style={styles.infoBox}>
-                <Text style={styles.missionTitle}>OBJETIVO: CAZA INSECTOS</Text>
-                <View style={styles.section}>
-                    <Text style={styles.label}>SINOPSIS</Text>
-                    <Text style={styles.text}>Una plaga de "Bugs" está destruyendo el código fuente. Tu misión es eliminarlos antes de que el sistema colapse.</Text>
-                </View>
-                <View style={styles.section}>
-                    <Text style={styles.label}>INTELIGENCIA ADAPTATIVA</Text>
-                    <Text style={styles.text}>Los objetivos aumentarán su velocidad y reducirán su tamaño de forma proporcional a tu éxito.</Text>
-                </View>
-                <View style={styles.warningContainer}>
-                    <Text style={styles.warning}>⚠️ TIEMPO LÍMITE: 20 SEGUNDOS ⚠️</Text>
-                </View>
-            </View>
-            <TouchableOpacity activeOpacity={0.8} style={styles.fightBtn} onPress={() => navigation.replace('Batalla')}>
-                <Text style={styles.btnText}>⚔️ INICIAR BATALLA ⚔️</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelBtn}>
-                <Text style={styles.cancelText}>ABORTAR MISIÓN</Text>
-            </TouchableOpacity>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center', padding: 25 },
-    headerContainer: { alignItems: 'center', marginBottom: 30 },
-    header: { color: '#ff4d4d', fontSize: 34, fontWeight: '900', letterSpacing: 6 },
-    lineaRoja: { height: 2, width: '60%', backgroundColor: '#ff4d4d', marginTop: 5 },
-    infoBox: { 
-        backgroundColor: '#161616', width: '100%', padding: 25, borderRadius: 20, marginBottom: 40, borderWidth: 1, borderColor: '#333',
-        elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 
+    container: { 
+        flex: 1, 
+        backgroundColor: '#000' 
     },
-    missionTitle: { color: '#f1c40f', fontWeight: '900', fontSize: 20, marginBottom: 20, textAlign: 'center' },
-    section: { marginBottom: 15 },
-    label: { color: '#2ecc71', fontWeight: 'bold', fontSize: 14, marginBottom: 4 },
-    text: { color: '#bdc3c7', fontSize: 16, lineHeight: 22, textAlign: 'justify' },
-    warningContainer: { marginTop: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#333' },
-    warning: { color: '#ff4d4d', fontWeight: 'bold', fontSize: 16, textAlign: 'center' },
-    fightBtn: { backgroundColor: '#e74c3c', paddingVertical: 20, width: '100%', borderRadius: 12, alignItems: 'center', borderBottomWidth: 4, borderBottomColor: '#c0392b' },
-    btnText: { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 2 },
-    cancelBtn: { marginTop: 25, padding: 10 },
-    cancelText: { color: '#555', fontSize: 14, fontWeight: 'bold', textDecorationLine: 'underline' }
+    content: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 25
+    },
+    header: { 
+        color: '#e74c3c', 
+        fontSize: 32, 
+        fontWeight: 'bold', 
+        marginBottom: 30, 
+        letterSpacing: 5,
+        textAlign: 'center'
+    },
+    infoBox: { 
+        backgroundColor: '#1a1a1a', 
+        width: '100%', 
+        padding: 25, 
+        borderRadius: 20, 
+        marginBottom: 40, 
+        borderWidth: 1, 
+        borderColor: '#333',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+        elevation: 5
+    },
+    missionTitle: { 
+        color: '#d4af37', 
+        fontWeight: 'bold', 
+        fontSize: 22, 
+        marginBottom: 20, 
+        textAlign: 'center',
+        textTransform: 'uppercase'
+    },
+    section: {
+        marginBottom: 15
+    },
+    label: { 
+        color: '#2ecc71', 
+        fontWeight: 'bold', 
+        fontSize: 14, 
+        marginBottom: 5,
+        textTransform: 'uppercase'
+    },
+    text: { 
+        color: '#bdc3c7', 
+        fontSize: 16, 
+        lineHeight: 22 
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#333',
+        marginVertical: 15
+    },
+    warning: { 
+        color: '#e74c3c', 
+        fontWeight: 'bold', 
+        fontSize: 18, 
+        textAlign: 'center' 
+    },
+    fightBtn: { 
+        backgroundColor: '#c0392b', 
+        paddingVertical: 18, 
+        width: '100%', 
+        borderRadius: 15, 
+        alignItems: 'center',
+        shadowColor: '#e74c3c',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 8
+    },
+    btnText: { 
+        color: '#fff', 
+        fontSize: 20, 
+        fontWeight: 'bold', 
+        letterSpacing: 1 
+    },
+    cancelBtn: {
+        marginTop: 20,
+        padding: 10
+    },
+    cancelText: { 
+        color: '#666', 
+        fontSize: 16,
+        textDecorationLine: 'underline'
+    }
 });
