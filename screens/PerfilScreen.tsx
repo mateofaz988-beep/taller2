@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 
 // --- 2. ASSETS ---
-const BACKGROUND_IMG = require('../assets/fondo.jpg');
+const BACKGROUND_IMG = require('../assets/kratos.jpeg');
 
 export default function PerfilScreen({ navigation }: any) {
 
